@@ -6,10 +6,40 @@ import io
 import base64
 import sys
 import os
+import requests
+from pathlib import Path
+import albumentations as A
 
 # Import local model files
 from unet_model import UNet
-from data_setup import get_preprocessing
+
+# Try to import preprocessing from data_setup, but provide fallback if rasterio is not available
+try:
+    from data_setup import get_preprocessing
+except ImportError as e:
+    st.warning(f"Could not import from data_setup: {e}")
+    st.info("Using fallback preprocessing function (rasterio not available)")
+    
+    def get_preprocessing():
+        """Fallback preprocessing function when rasterio is not available"""
+        def to_float_and_normalize(image, **kwargs):
+            return image.astype(np.float32) / 255.0
+        
+        def transpose_to_chw(image, **kwargs):
+            return image.transpose(2, 0, 1)
+        
+        def to_float32(mask, **kwargs):
+            return mask.astype(np.float32)
+        
+        _transform = [
+            # Scale to [0,1] range
+            A.Lambda(image=to_float_and_normalize),
+            # Convert to PyTorch format (CHW)
+            A.Lambda(image=transpose_to_chw),
+            # Ensure mask is float32
+            A.Lambda(mask=to_float32),
+        ]
+        return A.Compose(_transform)
 
 # Page configuration
 st.set_page_config(
@@ -73,6 +103,106 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def download_model_from_gdrive(file_id, destination):
+    """Download model file from Google Drive with improved handling"""
+    import re
+    
+    try:
+        st.info("🔄 Downloading model file from Google Drive... This may take a few minutes.")
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        session = requests.Session()
+        
+        # Method 1: Try direct download
+        status_text.text("Attempting direct download...")
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        
+        response = session.get(url, stream=False)
+        
+        # Check if we got a confirmation page
+        if 'text/html' in response.headers.get('content-type', '') and 'virus scan' in response.text.lower():
+            # Extract form parameters from virus scan page
+            status_text.text("Handling virus scan confirmation...")
+            
+            # Extract the form action URL and parameters
+            action_match = re.search(r'action="([^"]*)"', response.text)
+            id_match = re.search(r'name="id" value="([^"]*)"', response.text)
+            export_match = re.search(r'name="export" value="([^"]*)"', response.text)
+            confirm_match = re.search(r'name="confirm" value="([^"]*)"', response.text)
+            uuid_match = re.search(r'name="uuid" value="([^"]*)"', response.text)
+            
+            if action_match and id_match and confirm_match:
+                action_url = action_match.group(1)
+                file_id_param = id_match.group(1)
+                export_param = export_match.group(1) if export_match else "download"
+                confirm_param = confirm_match.group(1)
+                uuid_param = uuid_match.group(1) if uuid_match else ""
+                
+                # Build download URL with all parameters
+                download_url = f"{action_url}?id={file_id_param}&export={export_param}&confirm={confirm_param}"
+                if uuid_param:
+                    download_url += f"&uuid={uuid_param}"
+                
+                status_text.text("Downloading with confirmation parameters...")
+                response = session.get(download_url, stream=True)
+            else:
+                raise Exception("Could not extract form parameters from virus scan page")
+        else:
+            # Direct download worked, get streaming response
+            response = session.get(url, stream=True)
+        
+        # Verify we got binary content
+        content_type = response.headers.get('content-type', '')
+        if 'text/html' in content_type:
+            # Still getting HTML, try alternative approach
+            status_text.text("Trying alternative download method...")
+            alt_url = f"https://drive.usercontent.google.com/download?id={file_id}&export=download"
+            response = session.get(alt_url, stream=True)
+            
+            # If still HTML, fail
+            if 'text/html' in response.headers.get('content-type', ''):
+                raise Exception("Cannot bypass Google Drive download restrictions")
+        
+        # Download the file
+        file_size = response.headers.get('content-length')
+        if file_size:
+            file_size = int(file_size)
+        
+        downloaded = 0
+        chunk_size = 8192
+        
+        status_text.text("Downloading model file...")
+        
+        with open(destination, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    
+                    # Update progress
+                    if file_size and file_size > 0:
+                        progress = min(downloaded / file_size, 1.0)
+                        progress_bar.progress(progress)
+                        status_text.text(f"Downloaded: {downloaded / (1024*1024):.1f} MB / {file_size / (1024*1024):.1f} MB")
+                    else:
+                        status_text.text(f"Downloaded: {downloaded / (1024*1024):.1f} MB")
+        
+        # Verify download
+        if downloaded < 1000000:  # Less than 1MB - probably not the model
+            os.remove(destination)
+            raise Exception(f"Downloaded file too small ({downloaded} bytes) - likely not the model file")
+        
+        progress_bar.progress(1.0)
+        status_text.text("✅ Download completed!")
+        st.success(f"Model downloaded successfully ({downloaded / (1024*1024):.1f} MB)")
+        return True
+        
+    except Exception as e:
+        st.error(f"Failed to download model: {str(e)}")
+        st.info("You may need to manually download the model file and place it in the project directory.")
+        return False
+
 @st.cache_resource
 def load_model():
     """Load the trained UNet model (cached for performance)"""
@@ -83,15 +213,31 @@ def load_model():
         # Initialize model
         model = UNet(in_channels=3, out_channels=1)
         
-        # Load trained weights
+        # Model file path
         model_path = 'best_unet_model.pth'
+        
+        # Check if model file exists, if not download it
+        if not os.path.exists(model_path):
+            st.warning(f"Model file not found at {model_path}. Attempting to download from Google Drive...")
+            
+            # Google Drive file ID from the provided URL
+            file_id = "17mrNvHi3hXEDc4jE9yaqR4cTw1ek97MW"
+            
+            # Download the model
+            if not download_model_from_gdrive(file_id, model_path):
+                st.error("Failed to download model file.")
+                return None, None
+        
+        # Load trained weights
         if os.path.exists(model_path):
-            model.load_state_dict(torch.load(model_path, map_location=device))
+            st.info("📦 Loading model weights...")
+            model.load_state_dict(torch.load(model_path, map_location=device, weights_only=False))
             model.to(device)
             model.eval()
+            st.success("✅ Model loaded successfully!")
             return model, device
         else:
-            st.error(f"Model file not found at {model_path}")
+            st.error(f"Model file still not found at {model_path}")
             return None, None
             
     except Exception as e:
