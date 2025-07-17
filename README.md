@@ -4,7 +4,7 @@ A Flask-based web application for building detection from drone imagery using a 
 
 ## 🌐 Live Demo
 
-**Streamlit App:** [Deploy on Streamlit Cloud](https://share.streamlit.io)
+**Streamlit App:** [Deploy on Streamlit Cloud](https://drone-image-dl-classification.streamlit.app)
 
 **Flask App:** [Deploy on Heroku/Railway/Vercel]
 
