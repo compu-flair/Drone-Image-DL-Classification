@@ -6,6 +6,7 @@ import io
 import base64
 import sys
 import os
+import subprocess
 
 # Import local model files
 from unet_model import UNet
@@ -72,6 +73,32 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# Download model from Google Drive if not present
+MODEL_PATH = 'best_unet_model.pth'
+GDRIVE_URL = 'https://drive.google.com/uc?export=download&id=17mrNvHi3hXEDc4jE9yaqR4cTw1ek97MW'
+
+def download_model():
+    if not os.path.exists(MODEL_PATH):
+        st.warning('Model file not found. Downloading from Google Drive...')
+        try:
+            # Use gdown if available, else fallback to wget/curl
+            try:
+                import gdown
+                gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
+            except ImportError:
+                subprocess.run([
+                    sys.executable, '-m', 'pip', 'install', 'gdown'
+                ], check=True)
+                import gdown
+                gdown.download(GDRIVE_URL, MODEL_PATH, quiet=False)
+            st.success('Model downloaded successfully!')
+        except Exception as e:
+            st.error(f'Failed to download model: {e}')
+            raise
+
+# Call download_model before loading the model
+download_model()
 
 @st.cache_resource
 def load_model():
