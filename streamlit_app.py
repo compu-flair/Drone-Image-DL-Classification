@@ -380,7 +380,7 @@ def main():
 
     # Example images section
     st.markdown("**Example drone images (what to expect):**")
-    example_files = ["example_1.tif", "example_2.tif", "example_3.tif"]
+    example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
     example_captions = ["Example 1", "Example 2", "Example 3"]
     example_images = []
     cols = st.columns(3)
