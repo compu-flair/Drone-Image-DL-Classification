@@ -278,25 +278,32 @@ def process_example_images():
     example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
     example_captions = ["Example 1", "Example 2", "Example 3"]
 
-    # Load model
-    model, device = load_model()
-
-    if model is None:
-        return None, None, None, None
-
-    # Process example images
+    # Process example images (without model dependency for caching)
     example_images = []
+    
+    for file in example_files:
+        try:
+            img = Image.open(file)
+            example_images.append(img)
+        except Exception as e:
+            example_images.append(None)
+
+    return example_images, example_captions
+
+
+@st.cache_data
+def process_example_overlays(_model, device):
+    """Process example overlays with model (cached separately)"""
+    example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
     example_overlays = []
 
     for file in example_files:
         try:
             img = Image.open(file)
-            example_images.append(img)
-
             # Process the image
             processed_image, resized_image = preprocess_image(img)
             if processed_image is not None:
-                prediction = run_inference(model, device, processed_image)
+                prediction = run_inference(_model, device, processed_image)
                 if prediction is not None:
                     overlay = create_overlay(resized_image, prediction)
                     example_overlays.append(overlay)
@@ -305,10 +312,9 @@ def process_example_images():
             else:
                 example_overlays.append(None)
         except Exception as e:
-            example_images.append(None)
             example_overlays.append(None)
 
-    return example_images, example_overlays, example_captions, model
+    return example_overlays
 
 
 def preprocess_image(image):
@@ -417,11 +423,18 @@ def main():
         unsafe_allow_html=True,
     )
 
+    # Load model (cached as resource)
+    model, device = load_model()
+    
     # Process example images (cached)
     with st.spinner("Loading AI model and processing examples..."):
-        example_images, example_overlays, example_captions, model = (
-            process_example_images()
-        )
+        example_images, example_captions = process_example_images()
+        
+        # Process overlays if model is available
+        if model is not None:
+            example_overlays = process_example_overlays(model, device)
+        else:
+            example_overlays = [None, None, None]
 
     # Example images section
     st.markdown("**Example drone images (what to expect):**")
