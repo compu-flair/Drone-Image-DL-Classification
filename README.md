@@ -1,32 +1,34 @@
-# Land Cover Classification Web App
+# Land Cover Classification - Streamlit App
 
-A Flask-based web application for building detection from drone imagery using a trained U-Net model.
+A Streamlit web application for building detection from drone imagery using a trained U-Net model.
 
 ## 🌐 Live Demo
 
 **Streamlit App:** [Deploy on Streamlit Cloud](https://drone-image-dl-classification.streamlit.app)
 
-**Flask App:** [Deploy on Heroku/Railway/Vercel]
-
 **GitHub Repository:** [Your Repository Link]
 
 ### 🚀 Quick Deploy
 
-**Option 1: Streamlit Cloud (Recommended)**
+**Streamlit Cloud (Recommended)**
 1. Fork this repository
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Connect your GitHub account
 4. Select this repository
-5. Set main file: `webapp/streamlit_app.py`
-6. Set requirements: `webapp/requirements_streamlit.txt`
+5. Set main file: `streamlit_app.py`
+6. Set requirements: `requirements.txt`
 7. Deploy!
 
-**Option 2: Local Development**
+**Local Development**
 ```bash
-cd webapp
-source ../.venv/bin/activate
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-python app.py
+
+# Run the Streamlit app
+streamlit run streamlit_app.py
 ```
 
 ---
@@ -38,52 +40,42 @@ python app.py
 - 📊 **Visualization**: Display original image, prediction mask, and overlay
 - 💾 **Download Results**: Save processed images for further analysis
 - 📱 **Responsive Design**: Works on desktop and mobile devices
+- ⚡ **Cached Processing**: Example images processed once for better performance
 
 ## Prerequisites
 
 - Python 3.8 or higher
-- Trained U-Net model (`best_unet_model.pth`) in the parent directory
+- Trained U-Net model (automatically downloaded from Google Drive)
 - CUDA-compatible GPU (optional, for faster inference)
 
 ## Installation
 
-1. **Clone or navigate to the project directory**
+1. **Clone the repository**
    ```bash
-   cd webapp
+   git clone <your-repository-url>
+   cd Drone-Image-DL-Classification
    ```
 
-2. **Install dependencies**
+2. **Create and activate virtual environment**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Verify the trained model exists**
+## Running the Streamlit App
+
+1. **Start the Streamlit application**
    ```bash
-   ls ../Drone-Image-DL-Classification/best_unet_model.pth
-   ```
-
-## Testing the Setup
-
-Before running the web app, test that all components work correctly:
-
-```bash
-python test_model.py
-```
-
-This will test:
-- ✅ Model loading
-- ✅ Preprocessing pipeline
-- ✅ Inference pipeline
-
-## Running the Web App
-
-1. **Start the Flask application**
-   ```bash
-   python app.py
+   streamlit run streamlit_app.py
    ```
 
 2. **Open your web browser**
-   Navigate to: `http://localhost:5000`
+   Navigate to: `http://localhost:8501`
 
 3. **Upload an image**
    - Drag and drop an image file, or
@@ -93,11 +85,13 @@ This will test:
 
 ## How It Works
 
-1. **Image Upload**: User uploads a drone image through the web interface
-2. **Preprocessing**: Image is resized to 512x512 pixels and normalized (0-1 range)
-3. **Model Inference**: Preprocessed image is fed through the trained U-Net model
-4. **Post-processing**: Model output is converted to binary mask (buildings vs. background)
-5. **Visualization**: Results are displayed as:
+1. **Model Loading**: The app automatically downloads the pre-trained U-Net model from Google Drive on first run
+2. **Example Processing**: Example images are processed once and cached for better performance
+3. **Image Upload**: User uploads a drone image through the web interface
+4. **Preprocessing**: Image is resized to 512x512 pixels and normalized (0-1 range)
+5. **Model Inference**: Preprocessed image is fed through the trained U-Net model
+6. **Post-processing**: Model output is converted to binary mask (buildings vs. background)
+7. **Visualization**: Results are displayed as:
    - Original image
    - Building detection mask (white = buildings, black = background)
    - Overlay view (original image with red building overlay)
@@ -105,46 +99,54 @@ This will test:
 ## Project Structure
 
 ```
-webapp/
-├── app.py                 # Main Flask application
-├── test_model.py          # Model testing script
-├── requirements.txt       # Python dependencies
-├── README.md             # This file
-├── templates/
-│   └── index.html        # Web interface template
-├── uploads/              # Temporary storage for uploaded files
-└── results/              # Storage for processed results
+Drone-Image-DL-Classification/
+├── streamlit_app.py          # Main Streamlit application
+├── requirements.txt          # Python dependencies
+├── README.md                # This file
+├── img/                     # Example images
+│   ├── example_1.tif
+│   ├── example_2.tif
+│   └── example_3.tif
+├── unet_model.py            # U-Net model architecture
+├── data_setup.py            # Data preprocessing utilities
+├── format_code.py           # Code formatting utility
+├── pyproject.toml           # Project configuration
+└── .gitignore               # Git ignore rules
 ```
 
-## API Endpoints
+## Model Information
 
-- `GET /` - Main web interface
-- `POST /upload` - Image upload and processing endpoint
-- `GET /health` - Health check endpoint
+- **Architecture**: U-Net with skip connections
+- **Input**: RGB images (512x512 pixels)
+- **Output**: Binary building masks
+- **Framework**: PyTorch
+- **Training Data**: Drone imagery patches
+- **Performance**: Validation Dice Score ~0.81, IoU Score ~0.68
 
 ## Configuration
 
-The application can be configured by modifying variables in `app.py`:
+The application can be configured by modifying variables in `streamlit_app.py`:
 
-- `MAX_CONTENT_LENGTH`: Maximum file upload size (default: 16MB)
-- `UPLOAD_FOLDER`: Directory for uploaded files
-- `RESULTS_FOLDER`: Directory for processed results
+- **Model file path**: `best_unet_model.pth` (automatically downloaded)
+- **Google Drive file ID**: For model download
+- **Input image size**: 512x512 pixels
+- **Supported formats**: JPG, PNG, TIF
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Model file not found**
+1. **Model download fails**
    ```
-   Error: Model file not found at ../Drone-Image-DL-Classification/best_unet_model.pth
+   Error: Failed to download model file
    ```
-   **Solution**: Ensure the trained model file exists in the correct location
+   **Solution**: Check internet connection and Google Drive access
 
 2. **Import errors**
    ```
    ModuleNotFoundError: No module named 'unet_model'
    ```
-   **Solution**: Check that the path to the model source files is correct
+   **Solution**: Ensure all files are in the correct directory structure
 
 3. **CUDA out of memory**
    ```
@@ -156,11 +158,12 @@ The application can be configured by modifying variables in `app.py`:
    ```
    OSError: [Errno 98] Address already in use
    ```
-   **Solution**: Change the port in `app.py` or kill the existing process
+   **Solution**: Kill existing Streamlit processes or use a different port
 
 ### Performance Tips
 
 - **GPU Usage**: The app automatically uses CUDA if available for faster inference
+- **Caching**: Example images are processed once and cached for better performance
 - **Image Size**: Larger images take longer to process due to resizing
 - **Memory**: Close other applications if experiencing memory issues
 
@@ -183,45 +186,50 @@ isort *.py          # Import organization
 **Manual Formatting:**
 ```bash
 # Format specific files
-black app.py data_setup.py
-isort app.py data_setup.py
-```
-
-**Pre-commit Setup (Recommended):**
-Install pre-commit hooks to automatically format code before commits:
-```bash
-pip install pre-commit
-pre-commit install
+black streamlit_app.py unet_model.py
+isort streamlit_app.py unet_model.py
 ```
 
 ### Adding New Features
 
-1. **New Model Architecture**: Update the model loading in `app.py`
-2. **Additional Preprocessing**: Modify the `process_image()` function
-3. **UI Enhancements**: Edit `templates/index.html`
+1. **New Model Architecture**: Update the model loading in `streamlit_app.py`
+2. **Additional Preprocessing**: Modify the `preprocess_image()` function
+3. **UI Enhancements**: Edit the Streamlit interface in `streamlit_app.py`
 
 ### Testing
 
-Run the test suite:
+Test the model functionality:
 ```bash
-python test_model.py
+# Run the Streamlit app and test with example images
+streamlit run streamlit_app.py
 ```
 
-### Logging
+## Dependencies
 
-The application logs important events. Check the console output for:
-- Model loading status
-- Processing errors
-- Performance metrics
+Key dependencies include:
+- **Streamlit**: Web application framework
+- **PyTorch**: Deep learning framework
+- **Pillow**: Image processing
+- **NumPy**: Numerical computing
+- **Albumentations**: Image augmentation
+- **Requests**: HTTP requests for model download
 
 ## License
 
-This project is part of the Land Cover Classification system. See the main project README for license information.
+This project is part of the Land Cover Classification system. See the LICENSE file for details.
 
 ## Support
 
 For issues and questions:
 1. Check the troubleshooting section above
-2. Run the test script to verify setup
-3. Check the console logs for error messages
-4. Ensure all dependencies are installed correctly 
+2. Ensure all dependencies are installed correctly
+3. Check the Streamlit app logs for error messages
+4. Verify the model file is accessible
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request 

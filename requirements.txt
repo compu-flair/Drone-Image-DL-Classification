@@ -9,8 +9,7 @@ torchvision>=0.13.0
 numpy>=1.21.0
 scikit-learn>=1.0.0
 
-# Image processing and geospatial
-rasterio>=1.2.0
+# Image processing
 albumentations>=1.2.0
 Pillow>=9.0.0
 opencv-python>=4.5.0

@@ -272,6 +272,45 @@ def load_model():
         return None, None
 
 
+@st.cache_data
+def process_example_images():
+    """Process example images once and cache the results"""
+    example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
+    example_captions = ["Example 1", "Example 2", "Example 3"]
+    
+    # Load model
+    model, device = load_model()
+    
+    if model is None:
+        return None, None, None, None
+    
+    # Process example images
+    example_images = []
+    example_overlays = []
+    
+    for file in example_files:
+        try:
+            img = Image.open(file)
+            example_images.append(img)
+            
+            # Process the image
+            processed_image, resized_image = preprocess_image(img)
+            if processed_image is not None:
+                prediction = run_inference(model, device, processed_image)
+                if prediction is not None:
+                    overlay = create_overlay(resized_image, prediction)
+                    example_overlays.append(overlay)
+                else:
+                    example_overlays.append(None)
+            else:
+                example_overlays.append(None)
+        except Exception as e:
+            example_images.append(None)
+            example_overlays.append(None)
+    
+    return example_images, example_overlays, example_captions, model
+
+
 def preprocess_image(image):
     """Preprocess uploaded image for model inference"""
     try:
@@ -378,24 +417,18 @@ def main():
         unsafe_allow_html=True,
     )
 
+    # Process example images (cached)
+    with st.spinner("Loading AI model and processing examples..."):
+        example_images, example_overlays, example_captions, model = process_example_images()
+
     # Example images section
     st.markdown("**Example drone images (what to expect):**")
-    example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
-    example_captions = ["Example 1", "Example 2", "Example 3"]
-    example_images = []
     cols = st.columns(3)
-    for i, (file, caption) in enumerate(zip(example_files, example_captions)):
-        try:
-            img = Image.open(file)
-            example_images.append(img)
+    for i, (img, caption) in enumerate(zip(example_images, example_captions)):
+        if img is not None:
             cols[i].image(img, caption=caption, use_container_width=True)
-        except Exception as e:
-            example_images.append(None)
-            cols[i].write(f"Could not load {file}")
-
-    # Load model
-    with st.spinner("Loading AI model..."):
-        model, device = load_model()
+        else:
+            cols[i].write(f"Could not load example {i+1}")
 
     if model is None:
         st.error("Failed to load model. Please check the model file path.")
@@ -404,27 +437,15 @@ def main():
         # Show overlays for example images in a second row
         st.markdown("**Model predictions for the example images:**")
         overlay_cols = st.columns(3)
-        for i, img in enumerate(example_images):
-            if img is not None:
-                processed_image, resized_image = preprocess_image(img)
-                if processed_image is not None:
-                    prediction = run_inference(model, device, processed_image)
-                    if prediction is not None:
-                        overlay = create_overlay(resized_image, prediction)
-                        if overlay:
-                            overlay_cols[i].image(
-                                overlay,
-                                caption=f"Overlay for {example_captions[i]}",
-                                use_container_width=True,
-                            )
-                        else:
-                            overlay_cols[i].write("Could not create overlay.")
-                    else:
-                        overlay_cols[i].write("Prediction failed.")
-                else:
-                    overlay_cols[i].write("Preprocessing failed.")
+        for i, (overlay, caption) in enumerate(zip(example_overlays, example_captions)):
+            if overlay is not None:
+                overlay_cols[i].image(
+                    overlay,
+                    caption=f"Overlay for {caption}",
+                    use_container_width=True,
+                )
             else:
-                overlay_cols[i].write("No image loaded.")
+                overlay_cols[i].write(f"Could not process {caption}.")
 
     # File upload
     st.markdown("## 📁 Upload Your Image")
@@ -443,6 +464,9 @@ def main():
         # Process button
         if st.button("🚀 Process Image", type="primary"):
             with st.spinner("Processing image..."):
+                # Get device from model
+                device = next(model.parameters()).device
+                
                 # Preprocess image
                 processed_image, resized_image = preprocess_image(original_image)
 
