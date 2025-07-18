@@ -166,6 +166,34 @@ The application can be configured by modifying variables in `app.py`:
 
 ## Development
 
+### Code Formatting
+
+This project uses automated code formatting to maintain consistent style:
+
+**Automatic Formatting:**
+```bash
+# Format all Python files
+python format_code.py
+
+# Or run individually:
+black *.py          # Code formatting
+isort *.py          # Import organization
+```
+
+**Manual Formatting:**
+```bash
+# Format specific files
+black app.py data_setup.py
+isort app.py data_setup.py
+```
+
+**Pre-commit Setup (Recommended):**
+Install pre-commit hooks to automatically format code before commits:
+```bash
+pip install pre-commit
+pre-commit install
+```
+
 ### Adding New Features
 
 1. **New Model Architecture**: Update the model loading in `app.py`

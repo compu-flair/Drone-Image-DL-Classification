@@ -29,4 +29,8 @@ opencv-python>=4.5.0
 
 # Development and testing (optional)
 jupyter>=1.0.0
-ipykernel>=6.0.0 
+ipykernel>=6.0.0
+
+# Code formatting and import organization
+black>=23.0.0
+isort>=5.12.0 
