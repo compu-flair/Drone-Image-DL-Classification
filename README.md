@@ -175,7 +175,7 @@ This project uses automated code formatting to maintain consistent style:
 
 **Automatic Formatting:**
 ```bash
-# Format all Python files
+# Format all Python files (includes EOF newline checks)
 python format_code.py
 
 # Or run individually:

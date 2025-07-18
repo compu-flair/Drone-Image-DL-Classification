@@ -277,22 +277,22 @@ def process_example_images():
     """Process example images once and cache the results"""
     example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
     example_captions = ["Example 1", "Example 2", "Example 3"]
-    
+
     # Load model
     model, device = load_model()
-    
+
     if model is None:
         return None, None, None, None
-    
+
     # Process example images
     example_images = []
     example_overlays = []
-    
+
     for file in example_files:
         try:
             img = Image.open(file)
             example_images.append(img)
-            
+
             # Process the image
             processed_image, resized_image = preprocess_image(img)
             if processed_image is not None:
@@ -307,7 +307,7 @@ def process_example_images():
         except Exception as e:
             example_images.append(None)
             example_overlays.append(None)
-    
+
     return example_images, example_overlays, example_captions, model
 
 
@@ -419,7 +419,9 @@ def main():
 
     # Process example images (cached)
     with st.spinner("Loading AI model and processing examples..."):
-        example_images, example_overlays, example_captions, model = process_example_images()
+        example_images, example_overlays, example_captions, model = (
+            process_example_images()
+        )
 
     # Example images section
     st.markdown("**Example drone images (what to expect):**")
@@ -466,7 +468,7 @@ def main():
             with st.spinner("Processing image..."):
                 # Get device from model
                 device = next(model.parameters()).device
-                
+
                 # Preprocess image
                 processed_image, resized_image = preprocess_image(original_image)
 

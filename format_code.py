@@ -28,6 +28,29 @@ def run_command(command, description):
         return False
 
 
+def ensure_eof_newlines():
+    """Ensure all Python files end with a newline character."""
+    print("Ensuring EOF newlines...")
+    project_root = Path(__file__).parent
+
+    for py_file in project_root.glob("*.py"):
+        try:
+            with open(py_file, "r") as f:
+                content = f.read()
+
+            # Add newline if file doesn't end with one
+            if content and not content.endswith("\n"):
+                with open(py_file, "w") as f:
+                    f.write(content + "\n")
+                print(f"  ✅ Added EOF newline to {py_file.name}")
+            else:
+                print(f"  ✅ {py_file.name} already has EOF newline")
+        except Exception as e:
+            print(f"  ❌ Error processing {py_file.name}: {e}")
+
+    print("✅ EOF newlines check completed")
+
+
 def main():
     """Main function to format all Python files."""
     print("🎨 Starting code formatting...")
@@ -41,6 +64,9 @@ def main():
     os.chdir(project_root)
 
     try:
+        # Ensure EOF newlines first
+        ensure_eof_newlines()
+
         # Run black formatting
         success = run_command("black *.py", "Black code formatting")
         if not success:
