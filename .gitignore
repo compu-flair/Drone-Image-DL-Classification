@@ -101,3 +101,9 @@ dmypy.json
 .env.development.local
 .env.test.local
 .env.production.local 
+
+# Allow example images in app/img/
+!app/img/
+!app/img/example_1.tif
+!app/img/example_2.tif
+!app/img/example_3.tif 
