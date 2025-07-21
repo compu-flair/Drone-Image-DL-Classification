@@ -280,7 +280,7 @@ def process_example_images():
 
     # Process example images (without model dependency for caching)
     example_images = []
-    
+
     for file in example_files:
         try:
             img = Image.open(file)
@@ -425,11 +425,11 @@ def main():
 
     # Load model (cached as resource)
     model, device = load_model()
-    
+
     # Process example images (cached)
     with st.spinner("Loading AI model and processing examples..."):
         example_images, example_captions = process_example_images()
-        
+
         # Process overlays if model is available
         if model is not None:
             example_overlays = process_example_overlays(model, device)

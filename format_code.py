@@ -29,25 +29,31 @@ def run_command(command, description):
 
 
 def ensure_eof_newlines():
-    """Ensure all Python files end with a newline character."""
+    """Ensure all text-based files end with a newline character."""
     print("Ensuring EOF newlines...")
     project_root = Path(__file__).parent
 
-    for py_file in project_root.glob("*.py"):
-        try:
-            with open(py_file, "r") as f:
-                content = f.read()
-
-            # Add newline if file doesn't end with one
-            if content and not content.endswith("\n"):
-                with open(py_file, "w") as f:
-                    f.write(content + "\n")
-                print(f"  ✅ Added EOF newline to {py_file.name}")
-            else:
-                print(f"  ✅ {py_file.name} already has EOF newline")
-        except Exception as e:
-            print(f"  ❌ Error processing {py_file.name}: {e}")
-
+    # List of file patterns to check
+    file_patterns = ["*.py", "*.md", "*.toml", "*.txt", "LICENSE", ".gitignore"]
+    files_checked = set()
+    for pattern in file_patterns:
+        for file in project_root.glob(pattern):
+            # Avoid checking the same file twice if it matches multiple patterns
+            if file in files_checked:
+                continue
+            files_checked.add(file)
+            try:
+                with open(file, "r") as f:
+                    content = f.read()
+                # Add newline if file doesn't end with one
+                if content and not content.endswith("\n"):
+                    with open(file, "w") as f:
+                        f.write(content + "\n")
+                    print(f"  ✅ Added EOF newline to {file.name}")
+                else:
+                    print(f"  ✅ {file.name} already has EOF newline")
+            except Exception as e:
+                print(f"  ❌ Error processing {file.name}: {e}")
     print("✅ EOF newlines check completed")
 
 
