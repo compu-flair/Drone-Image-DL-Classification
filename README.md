@@ -15,7 +15,7 @@ A Streamlit web application for building detection from drone imagery using a tr
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Connect your GitHub account
 4. Select this repository
-5. Set main file: `streamlit_app.py`
+5. Set main file: `app/streamlit_app.py`
 6. Set requirements: `requirements.txt`
 7. Deploy!
 
@@ -27,8 +27,8 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the Streamlit app
-streamlit run streamlit_app.py
+# Run the Streamlit app from the app folder
+cd app && streamlit run streamlit_app.py
 ```
 
 ---
@@ -71,7 +71,7 @@ streamlit run streamlit_app.py
 
 1. **Start the Streamlit application**
    ```bash
-   streamlit run streamlit_app.py
+   cd app && streamlit run streamlit_app.py
    ```
 
 2. **Open your web browser**
@@ -100,17 +100,23 @@ streamlit run streamlit_app.py
 
 ```
 Drone-Image-DL-Classification/
-├── streamlit_app.py          # Main Streamlit application
-├── requirements.txt          # Python dependencies
-├── README.md                # This file
+├── app/                     # Main application folder
+│   ├── __init__.py          # Package initialization
+│   ├── config.py            # Centralized configuration
+│   ├── data_setup.py        # Data preprocessing utilities
+│   ├── streamlit_app.py     # Main Streamlit application (Home page)
+│   ├── unet_model.py        # U-Net model architecture
+│   ├── best_unet_model.pth  # Trained model (auto-downloaded)
+│   └── pages/
+│       └── About.py         # About page (model info, metrics, links)
 ├── img/                     # Example images
 │   ├── example_1.tif
 │   ├── example_2.tif
 │   └── example_3.tif
-├── unet_model.py            # U-Net model architecture
-├── data_setup.py            # Data preprocessing utilities
 ├── format_code.py           # Code formatting utility
+├── requirements.txt         # Python dependencies
 ├── pyproject.toml           # Project configuration
+├── README.md                # This file
 └── .gitignore               # Git ignore rules
 ```
 
@@ -125,12 +131,13 @@ Drone-Image-DL-Classification/
 
 ## Configuration
 
-The application can be configured by modifying variables in `streamlit_app.py`:
+The application can be configured by modifying settings in `app/config.py`:
 
-- **Model file path**: `best_unet_model.pth` (automatically downloaded)
-- **Google Drive file ID**: For model download
-- **Input image size**: 512x512 pixels
-- **Supported formats**: JPG, PNG, TIF
+- **Model configuration**: File path, Google Drive ID, input/output channels
+- **UI settings**: Page title, styling, content text
+- **File upload**: Supported formats and validation
+- **Example images**: Paths and captions
+- **Processing parameters**: Image size, thresholds, overlay colors
 
 ## Troubleshooting
 
@@ -146,7 +153,7 @@ The application can be configured by modifying variables in `streamlit_app.py`:
    ```
    ModuleNotFoundError: No module named 'unet_model'
    ```
-   **Solution**: Ensure all files are in the correct directory structure
+   **Solution**: Ensure you're running from the app directory: `cd app && streamlit run streamlit_app.py`
 
 3. **CUDA out of memory**
    ```
@@ -179,29 +186,30 @@ This project uses automated code formatting to maintain consistent style:
 python format_code.py
 
 # Or run individually:
-black *.py          # Code formatting
-isort *.py          # Import organization
+source .venv/bin/activate && black *.py app/*.py          # Code formatting
+source .venv/bin/activate && isort *.py app/*.py          # Import organization
 ```
 
 **Manual Formatting:**
 ```bash
 # Format specific files
-black streamlit_app.py unet_model.py
-isort streamlit_app.py unet_model.py
+source .venv/bin/activate && black app/streamlit_app.py app/unet_model.py
+source .venv/bin/activate && isort app/streamlit_app.py app/unet_model.py
 ```
 
 ### Adding New Features
 
-1. **New Model Architecture**: Update the model loading in `streamlit_app.py`
-2. **Additional Preprocessing**: Modify the `preprocess_image()` function
-3. **UI Enhancements**: Edit the Streamlit interface in `streamlit_app.py`
+1. **New Model Architecture**: Update the model loading in `app/streamlit_app.py`
+2. **Additional Preprocessing**: Modify the `preprocess_image()` function in `app/streamlit_app.py`
+3. **UI Enhancements**: Edit the Streamlit interface in `app/streamlit_app.py`
+4. **Configuration Changes**: Modify settings in `app/config.py`
 
 ### Testing
 
 Test the model functionality:
 ```bash
 # Run the Streamlit app and test with example images
-streamlit run streamlit_app.py
+cd app && streamlit run streamlit_app.py
 ```
 
 ## Dependencies

@@ -9,7 +9,6 @@ import numpy as np
 import requests
 import streamlit as st
 import torch
-from PIL import Image
 
 # Import configuration
 from config import (
@@ -22,6 +21,7 @@ from config import (
     PAGE_CONFIG,
     UPLOAD_CONFIG,
 )
+from PIL import Image
 
 # Import local model files
 from unet_model import UNet
@@ -508,6 +508,9 @@ def main():
                                     mime="image/png",
                                 )
 
+                        # Update session state
+                        st.session_state.processed_images += 1
+
                         # Success message
                         st.success("✅ Image processed successfully!")
 
@@ -520,16 +523,43 @@ def main():
                             st.write(f"**Device:** {device}")
                             st.write(f"**Task:** Binary building segmentation")
 
-    # Sidebar
+    # Sidebar Navigation
     with st.sidebar:
-        st.markdown("## 🛠️ About")
-        st.markdown(APP_CONTENT["sidebar_about"])
+        st.markdown("## 🧭 Navigation")
+        st.markdown("Use the pages in the sidebar to explore the application:")
 
-        st.markdown("## 📊 Model Performance")
-        st.markdown(APP_CONTENT["sidebar_performance"])
+        st.markdown("### 📄 Available Pages")
+        st.markdown(
+            """
+        - **Main App** - Upload and process images
+        - **About** - Model details and performance metrics
+        """
+        )
 
-        st.markdown("## 🔗 Links")
-        st.markdown(APP_CONTENT["sidebar_links"])
+        st.markdown("---")
+
+        st.markdown("### 🔧 Quick Actions")
+        if st.button("🔄 Refresh App"):
+            st.rerun()
+
+        st.markdown("### ℹ️ Tips")
+        st.info(
+            """
+        💡 **Pro Tips:**
+        - Upload high-resolution images for better results
+        - Try the example images first to understand the output
+        - Check the About page for technical details
+        """
+        )
+
+        st.markdown("---")
+        st.markdown("### 📊 Current Session")
+
+        # Session state info
+        if "processed_images" not in st.session_state:
+            st.session_state.processed_images = 0
+
+        st.metric(label="Images Processed", value=st.session_state.processed_images)
 
 
 if __name__ == "__main__":

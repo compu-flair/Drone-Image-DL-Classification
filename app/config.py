@@ -24,7 +24,7 @@ MODEL_CONFIG = {
 
 # Example Images Configuration
 EXAMPLE_IMAGES = {
-    "files": ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"],
+    "files": ["../img/example_1.tif", "../img/example_2.tif", "../img/example_3.tif"],
     "captions": ["Example 1", "Example 2", "Example 3"],
 }
 

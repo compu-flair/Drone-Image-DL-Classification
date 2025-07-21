@@ -35,8 +35,13 @@ def ensure_eof_newlines():
 
     # List of file patterns to check
     file_patterns = ["*.py", "*.md", "*.toml", "*.txt", "LICENSE", ".gitignore"]
+    # Also check files in the app folder (including pages)
+    app_patterns = ["app/*.py", "app/pages/*.py"]
+
     files_checked = set()
-    for pattern in file_patterns:
+    all_patterns = file_patterns + app_patterns
+
+    for pattern in all_patterns:
         for file in project_root.glob(pattern):
             # Avoid checking the same file twice if it matches multiple patterns
             if file in files_checked:
@@ -49,11 +54,13 @@ def ensure_eof_newlines():
                 if content and not content.endswith("\n"):
                     with open(file, "w") as f:
                         f.write(content + "\n")
-                    print(f"  ✅ Added EOF newline to {file.name}")
+                    print(f"  ✅ Added EOF newline to {file.relative_to(project_root)}")
                 else:
-                    print(f"  ✅ {file.name} already has EOF newline")
+                    print(
+                        f"  ✅ {file.relative_to(project_root)} already has EOF newline"
+                    )
             except Exception as e:
-                print(f"  ❌ Error processing {file.name}: {e}")
+                print(f"  ❌ Error processing {file.relative_to(project_root)}: {e}")
     print("✅ EOF newlines check completed")
 
 
@@ -74,12 +81,18 @@ def main():
         ensure_eof_newlines()
 
         # Run black formatting
-        success = run_command("black *.py", "Black code formatting")
+        success = run_command(
+            "source .venv/bin/activate && black *.py app/*.py app/pages/*.py",
+            "Black code formatting",
+        )
         if not success:
             sys.exit(1)
 
         # Run isort import organization
-        success = run_command("isort *.py", "isort import organization")
+        success = run_command(
+            "source .venv/bin/activate && isort *.py app/*.py app/pages/*.py",
+            "isort import organization",
+        )
         if not success:
             sys.exit(1)
 
