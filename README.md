@@ -107,12 +107,12 @@ Drone-Image-DL-Classification/
 │   ├── streamlit_app.py     # Main Streamlit application (Home page)
 │   ├── unet_model.py        # U-Net model architecture
 │   ├── best_unet_model.pth  # Trained model (auto-downloaded)
+│   ├── img/                 # Example images
+│   │   ├── example_1.tif
+│   │   ├── example_2.tif
+│   │   └── example_3.tif
 │   └── pages/
 │       └── About.py         # About page (model info, metrics, links)
-├── img/                     # Example images
-│   ├── example_1.tif
-│   ├── example_2.tif
-│   └── example_3.tif
 ├── format_code.py           # Code formatting utility
 ├── requirements.txt         # Python dependencies
 ├── pyproject.toml           # Project configuration
