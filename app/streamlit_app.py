@@ -241,9 +241,12 @@ def process_example_images():
 
     for file in example_files:
         try:
-            img = Image.open(file)
+            # Ensure we're looking in the correct directory
+            img_path = Path(__file__).parent / file
+            img = Image.open(img_path)
             example_images.append(img)
         except Exception as e:
+            st.error(f"Could not load {file}: {e}")
             example_images.append(None)
 
     return example_images, example_captions
@@ -257,7 +260,9 @@ def process_example_overlays(_model, device):
 
     for file in example_files:
         try:
-            img = Image.open(file)
+            # Ensure we're looking in the correct directory
+            img_path = Path(__file__).parent / file
+            img = Image.open(img_path)
             # Process the image
             processed_image, resized_image = preprocess_image(img)
             if processed_image is not None:
