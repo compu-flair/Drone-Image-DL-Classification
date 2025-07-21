@@ -11,6 +11,18 @@ import streamlit as st
 import torch
 from PIL import Image
 
+# Import configuration
+from config import (
+    APP_CONTENT,
+    CUSTOM_CSS,
+    DOWNLOAD_CONFIG,
+    EXAMPLE_IMAGES,
+    MODEL_CONFIG,
+    OVERLAY_CONFIG,
+    PAGE_CONFIG,
+    UPLOAD_CONFIG,
+)
+
 # Import local model files
 from unet_model import UNet
 
@@ -45,69 +57,10 @@ except ImportError as e:
 
 
 # Page configuration
-st.set_page_config(
-    page_title="Land Cover Classification",
-    page_icon="🏠",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+st.set_page_config(**PAGE_CONFIG)
 
 # Custom CSS for better styling
-st.markdown(
-    """
-<style>
-    .main-header {
-        font-size: 3rem;
-        font-weight: bold;
-        text-align: center;
-        color: #1f77b4;
-        margin-bottom: 2rem;
-    }
-    .sub-header {
-        font-size: 1.2rem;
-        text-align: center;
-        color: #666;
-        margin-bottom: 2rem;
-    }
-    .info-box {
-        background-color: #2c3e50;
-        border-left: 4px solid #3498db;
-        padding: 1rem;
-        border-radius: 0 10px 10px 0;
-        margin-bottom: 2rem;
-        color: white;
-    }
-    
-    .info-box h3 {
-        color: #ecf0f1;
-        margin-bottom: 10px;
-    }
-    
-    .info-box ul {
-        list-style: none;
-        padding-left: 0;
-    }
-    
-    .info-box li {
-        padding: 5px 0;
-        color: #bdc3c7;
-    }
-    
-    .info-box li:before {
-        content: "✓ ";
-        color: #27ae60;
-        font-weight: bold;
-    }
-    .result-container {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
 def download_model_from_gdrive(file_id, destination):
@@ -184,7 +137,7 @@ def download_model_from_gdrive(file_id, destination):
             file_size = int(file_size)
 
         downloaded = 0
-        chunk_size = 8192
+        chunk_size = DOWNLOAD_CONFIG["chunk_size"]
 
         status_text.text("Downloading model file...")
 
@@ -207,7 +160,9 @@ def download_model_from_gdrive(file_id, destination):
                         )
 
         # Verify download
-        if downloaded < 1000000:  # Less than 1MB - probably not the model
+        if (
+            downloaded < DOWNLOAD_CONFIG["min_file_size"]
+        ):  # Less than configured minimum - probably not the model
             os.remove(destination)
             raise Exception(
                 f"Downloaded file too small ({downloaded} bytes) - likely not the model file"
@@ -234,10 +189,13 @@ def load_model():
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Initialize model
-        model = UNet(in_channels=3, out_channels=1)
+        model = UNet(
+            in_channels=MODEL_CONFIG["input_channels"],
+            out_channels=MODEL_CONFIG["output_channels"],
+        )
 
         # Model file path
-        model_path = "best_unet_model.pth"
+        model_path = MODEL_CONFIG["model_path"]
 
         # Check if model file exists, if not download it
         if not os.path.exists(model_path):
@@ -246,7 +204,7 @@ def load_model():
             )
 
             # Google Drive file ID from the provided URL
-            file_id = "17mrNvHi3hXEDc4jE9yaqR4cTw1ek97MW"
+            file_id = MODEL_CONFIG["google_drive_file_id"]
 
             # Download the model
             if not download_model_from_gdrive(file_id, model_path):
@@ -275,8 +233,8 @@ def load_model():
 @st.cache_data
 def process_example_images():
     """Process example images once and cache the results"""
-    example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
-    example_captions = ["Example 1", "Example 2", "Example 3"]
+    example_files = EXAMPLE_IMAGES["files"]
+    example_captions = EXAMPLE_IMAGES["captions"]
 
     # Process example images (without model dependency for caching)
     example_images = []
@@ -294,7 +252,7 @@ def process_example_images():
 @st.cache_data
 def process_example_overlays(_model, device):
     """Process example overlays with model (cached separately)"""
-    example_files = ["img/example_1.tif", "img/example_2.tif", "img/example_3.tif"]
+    example_files = EXAMPLE_IMAGES["files"]
     example_overlays = []
 
     for file in example_files:
@@ -324,8 +282,8 @@ def preprocess_image(image):
         if image.mode != "RGB":
             image = image.convert("RGB")
 
-        # Resize to model input size (512x512)
-        image = image.resize((512, 512), Image.Resampling.LANCZOS)
+        # Resize to model input size
+        image = image.resize(MODEL_CONFIG["input_size"], Image.Resampling.LANCZOS)
 
         # Convert to numpy array
         image_array = np.array(image)
@@ -333,7 +291,9 @@ def preprocess_image(image):
         # Apply preprocessing (same as training)
         preprocessing = get_preprocessing()
         if preprocessing:
-            sample = preprocessing(image=image_array, mask=np.zeros((512, 512)))
+            sample = preprocessing(
+                image=image_array, mask=np.zeros(MODEL_CONFIG["input_size"])
+            )
             processed_image = sample["image"]  # Shape: (3, 512, 512)
         else:
             # Fallback preprocessing
@@ -356,7 +316,7 @@ def run_inference(model, device, processed_image):
         # Run inference
         with torch.no_grad():
             output = model(input_tensor)
-            prediction = torch.sigmoid(output) > 0.5
+            prediction = torch.sigmoid(output) > MODEL_CONFIG["prediction_threshold"]
             prediction = prediction.cpu().numpy()[0, 0]  # Remove batch and channel dims
 
         return prediction
@@ -378,14 +338,16 @@ def create_overlay(original_image, prediction):
         prediction_rgba = prediction_pil.convert("RGBA")
 
         # Create red overlay for buildings
-        red_overlay = Image.new("RGBA", prediction_rgba.size, (255, 0, 0, 128))
+        red_overlay = Image.new(
+            "RGBA", prediction_rgba.size, OVERLAY_CONFIG["building_color"]
+        )
 
         # Apply red overlay where prediction is white
         prediction_array = np.array(prediction_rgba)
         red_array = np.array(red_overlay)
 
         # Where prediction is white (255), apply red overlay
-        mask = prediction_array[:, :, 0] > 127
+        mask = prediction_array[:, :, 0] > OVERLAY_CONFIG["mask_threshold"]
         overlay_array = np.array(overlay.convert("RGBA"))
         overlay_array[mask] = red_array[mask]
 
@@ -399,29 +361,16 @@ def create_overlay(original_image, prediction):
 def main():
     # Header
     st.markdown(
-        '<h1 class="main-header">🏠 Land Cover Classification</h1>',
+        f'<h1 class="main-header">{APP_CONTENT["main_title"]}</h1>',
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<p class="sub-header">AI-powered building detection from drone imagery</p>',
+        f'<p class="sub-header">{APP_CONTENT["subtitle"]}</p>',
         unsafe_allow_html=True,
     )
 
     # Info box
-    st.markdown(
-        """
-    <div class="info-box">
-        <h3>How it works:</h3>
-        <ul>
-            <li>Upload a drone image (JPG, PNG, or TIF format)</li>
-            <li>Our AI model will analyze the image and detect buildings</li>
-            <li>View the original image, prediction mask, and overlay</li>
-            <li>Download the results for further analysis</li>
-        </ul>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
+    st.markdown(APP_CONTENT["info_box_content"], unsafe_allow_html=True)
 
     # Load model (cached as resource)
     model, device = load_model()
@@ -466,8 +415,8 @@ def main():
     st.markdown("## 📁 Upload Your Image")
     uploaded_file = st.file_uploader(
         "Choose an image file",
-        type=["jpg", "jpeg", "png", "tif", "tiff"],
-        help="Upload a drone image to detect buildings",
+        type=UPLOAD_CONFIG["allowed_types"],
+        help=UPLOAD_CONFIG["help_text"],
     )
 
     if uploaded_file is not None:
@@ -565,49 +514,22 @@ def main():
                         # Model info
                         with st.expander("ℹ️ Model Information"):
                             st.write(f"**Model:** U-Net Architecture")
-                            st.write(f"**Input Size:** 512x512 pixels")
+                            st.write(
+                                f"**Input Size:** {MODEL_CONFIG['input_size'][0]}x{MODEL_CONFIG['input_size'][1]} pixels"
+                            )
                             st.write(f"**Device:** {device}")
                             st.write(f"**Task:** Binary building segmentation")
 
     # Sidebar
     with st.sidebar:
         st.markdown("## 🛠️ About")
-        st.markdown(
-            """
-        This application uses a trained U-Net model to detect buildings in drone imagery.
-        
-        **Features:**
-        - Real-time building detection
-        - High-resolution mask generation
-        - Interactive overlay visualization
-        - Download results
-        
-        **Technical Details:**
-        - Model: U-Net with skip connections
-        - Input: RGB images (512x512)
-        - Output: Binary building masks
-        - Framework: PyTorch
-        """
-        )
+        st.markdown(APP_CONTENT["sidebar_about"])
 
         st.markdown("## 📊 Model Performance")
-        st.markdown(
-            """
-        - **Architecture:** U-Net
-        - **Training Data:** Drone imagery patches
-        - **Validation Dice Score:** ~0.81
-        - **Validation IoU Score:** ~0.68
-        """
-        )
+        st.markdown(APP_CONTENT["sidebar_performance"])
 
         st.markdown("## 🔗 Links")
-        st.markdown(
-            """
-        - [GitHub Repository](#)
-        - [Model Training Notebook](#)
-        - [Documentation](#)
-        """
-        )
+        st.markdown(APP_CONTENT["sidebar_links"])
 
 
 if __name__ == "__main__":
