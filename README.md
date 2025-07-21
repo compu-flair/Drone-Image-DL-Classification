@@ -4,7 +4,7 @@ A Streamlit web application for building detection from drone imagery using a tr
 
 ## 🌐 Live Demo
 
-**Streamlit App:** [Deploy on Streamlit Cloud](https://drone-image-dl-classification-dnvzybhry3qzizcnpmbmqe.streamlit.app/)
+**Streamlit App:** [Deploy on Streamlit Cloud](https://drone-image-dl-classification-e3exiqv6xnj5o5bdxnxznm.streamlit.app/)
 
 **GitHub Repository:** [Your Repository Link]
 
