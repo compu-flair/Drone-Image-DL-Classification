@@ -107,3 +107,6 @@ dmypy.json
 !app/img/example_1.tif
 !app/img/example_2.tif
 !app/img/example_3.tif 
+
+data/
+mlruns/
