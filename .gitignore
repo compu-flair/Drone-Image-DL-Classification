@@ -110,3 +110,5 @@ dmypy.json
 
 data/
 mlruns/
+# Include all files in app/img/ directory
+!app/img/*
