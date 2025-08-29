@@ -27,10 +27,10 @@ st.markdown(
 col1, col2 = st.columns([2, 1])
 
 with col1:
-        # About section
+    # About section
     st.markdown("## About")
     st.markdown(APP_CONTENT["sidebar_about"])
-    
+
     # Technical Details
     st.markdown("## Technical Details")
     st.markdown(
@@ -59,7 +59,7 @@ with col2:
     # Performance metrics
     st.markdown("## Model Performance")
     st.markdown(APP_CONTENT["sidebar_performance"])
-    
+
     # Performance visualization
     st.markdown("### Metrics Breakdown")
 
