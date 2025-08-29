@@ -100,24 +100,55 @@ cd app && streamlit run streamlit_app.py
 
 ```
 Drone-Image-DL-Classification/
-├── app/                     # Main application folder
-│   ├── __init__.py          # Package initialization
-│   ├── config.py            # Centralized configuration
-│   ├── data_setup.py        # Data preprocessing utilities
-│   ├── streamlit_app.py     # Main Streamlit application (Home page)
-│   ├── unet_model.py        # U-Net model architecture
-│   ├── best_unet_model.pth  # Trained model (auto-downloaded)
-│   ├── img/                 # Example images
-│   │   ├── example_1.tif
-│   │   ├── example_2.tif
-│   │   └── example_3.tif
+├── app/                       # Main application code
+│   ├── __init__.py            # Python package initializer
+│   ├── best_unet_model.pth    # Trained U-Net model weights
+│   ├── config.py              # App configuration settings
+│   ├── data_setup.py          # Data preprocessing utilities
+│   ├── lightning_unet.py      # PyTorch Lightning U-Net implementation
+│   ├── streamlit_app.py       # Main Streamlit web app
+│   ├── unet_model.py          # U-Net model architecture (vanilla)
+│   ├── img/                   # Example and UI images
+│   │   ├── 0_mlflow_homepage.png   # MLflow UI screenshot
+│   │   ├── 1_mlflow_experimenthome.png # MLflow experiment screenshot
+│   │   ├── 2_compare_start.png       # Comparison UI screenshot
+│   │   ├── 3_compare.png             # Comparison UI screenshot
+│   │   ├── 4_individual.png          # Individual result screenshot
+│   │   ├── 5_individual_overview.png # Individual overview screenshot
+│   │   ├── 6_ngrok.png               # Ngrok tunnel screenshot
+│   │   ├── example_1.tif             # Example drone image
+│   │   ├── example_2.tif             # Example drone image
+│   │   └── example_3.tif             # Example drone image
 │   └── pages/
-│       └── About.py         # About page (model info, metrics, links)
-├── format_code.py           # Code formatting utility
-├── requirements.txt         # Python dependencies
-├── pyproject.toml           # Project configuration
-├── README.md                # This file
-└── .gitignore               # Git ignore rules
+│       └── About.py              # About page for Streamlit app
+├── data/                       # Data folders for raw, interim, and processed data
+│   ├── 0_raw/                  # Raw input data (e.g., original images, geojson)
+│   ├── 1_interim/              # Interim processed data (e.g., masks, RGB)
+│   └── 2_patches/              # Image and label patches for training
+├── nb/                         # Notebooks and experiment logs
+│   ├── best_unet_model.pth     # Trained model weights (notebook context)
+│   ├── data/                   # Notebook-specific data folders
+│   │   ├── 0_raw/              # Raw data for notebooks
+│   │   ├── 1_interim/          # Interim data for notebooks
+│   │   └── 2_patches/          # Patches for notebooks
+│   ├── local/                  # Main notebook experiments
+│   │   ├── 1_dataprep.ipynb    # Data preparation notebook
+│   │   ├── 2_model-training.ipynb # Model training notebook
+│   │   ├── 3_experiment.ipynb  # Experiment and analysis notebook
+│   │   ├── best_unet_model.pth # Trained model weights (local)
+│   │   ├── data/               # Data for local notebooks
+│   │   ├── lightning_logs/     # PyTorch Lightning logs
+│   │   └── mlruns/             # MLflow experiment logs
+│   └── party-time/             # Alternate notebook experiments
+│       ├── 1_dataprep.ipynb    # Data preparation notebook (alt)
+│       ├── 2_model-training.ipynb # Model training notebook (alt)
+│       └── 3_experiment.ipynb  # Experiment notebook (alt)
+├── format_code.py              # Utility for code formatting
+├── pyproject.toml              # Project metadata and build config
+├── requirements.txt            # Python dependencies
+├── LICENSE                     # License information
+├── README.md                   # Project documentation
+├── contribution.md             # Contribution guidelines
 ```
 
 ## 🧠 Model Information
