@@ -6,9 +6,24 @@ This script applies black formatting and isort import organization to all Python
 in the project to ensure consistent code style.
 """
 
+import os
+import platform
 import subprocess
 import sys
 from pathlib import Path
+
+
+def get_activate_cmd():
+    """Return the correct activate command for the current OS."""
+    current_os = platform.system().lower()
+    if current_os == "linux":
+        return ". .venv/bin/activate && "
+    elif current_os == "darwin":  # macOS
+        return ". .venv/bin/activate && "
+    elif current_os == "windows":
+        return ".venv\\Scripts\\activate && "
+    else:
+        return ""
 
 
 def run_command(command, description):
@@ -72,6 +87,8 @@ def main():
     project_root = Path(__file__).parent
     print(f"Project root: {project_root}")
 
+    activate_cmd = get_activate_cmd()
+
     # Change to project directory
     original_cwd = Path.cwd()
     os.chdir(project_root)
@@ -82,7 +99,7 @@ def main():
 
         # Run black formatting
         success = run_command(
-            "source .venv/bin/activate && black *.py app/*.py app/pages/*.py",
+            f"{activate_cmd}black *.py app/*.py app/pages/*.py",
             "Black code formatting",
         )
         if not success:
@@ -90,7 +107,7 @@ def main():
 
         # Run isort import organization
         success = run_command(
-            "source .venv/bin/activate && isort *.py app/*.py app/pages/*.py",
+            f"{activate_cmd}isort *.py app/*.py app/pages/*.py",
             "isort import organization",
         )
         if not success:
@@ -105,6 +122,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import os
-
     main()

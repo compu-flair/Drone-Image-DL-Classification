@@ -20,6 +20,15 @@ A Streamlit web application for building detection from drone imagery using a tr
 7. 🚀 Deploy!
 
 **Local Development**
+
+Create a virtual environment, install dependencies, and run the app.
+
+```bash
+python3 -m venv .venv
+```
+
+Then, run the following commands to activate the environment, install dependencies, and start the app.
+
 ```bash
 # 🟢 Activate virtual environment
 source .venv/bin/activate
